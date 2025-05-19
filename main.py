@@ -8,7 +8,7 @@ st.title("🎬 Rekomendacje filmów")
 
 selected = st.multiselect("Wybierz swoje ulubione filmy:", df["Series_Title"].tolist())
 
-if selected:
+"""if selected:
     recs = recommend(df, selected)
     st.write("🎯 Rekomendacje:")
-    st.table(recs[["Series_Title", "Genre", "IMDB_Rating"]])
+    st.table(recs[["Series_Title", "Genre", "IMDB_Rating"]])"""
