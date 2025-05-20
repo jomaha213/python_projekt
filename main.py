@@ -30,8 +30,8 @@ if selected:
             selected_df,
             x="Series_Title",
             y="Gross",
-            color="Gross",  # Kolor słupków zależny od wartości Gross
-            color_continuous_scale=["red", "green"],  # Gradient od czerwonego (niski Gross) do zielonego (wysoki Gross)
+            color="Gross",
+            color_continuous_scale=["red", "yellow", "green"],  # Gradient: czerwony → żółty → zielony
             title="Zysk wybranych filmów",
             labels={"Series_Title": "Tytuł filmu", "Gross": "Zysk (w USD)"},
         )
@@ -68,9 +68,9 @@ if selected:
             coloraxis_showscale=False,
             coloraxis_colorbar_title="Zysk",
             coloraxis=dict(
-                colorscale=["red", "green"],
-                cmin=selected_df["Gross"].min(),  # Minimalna wartość Gross z selected_df
-                cmax=selected_df["Gross"].max()   # Maksymalna wartość Gross z selected_df
+                colorscale=["red", "yellow", "green"],  # Gradient: czerwony → żółty → zielony
+                cmin=selected_df["Gross"].min(),
+                cmax=selected_df["Gross"].max()
             ),
         )
 
