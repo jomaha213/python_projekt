@@ -23,7 +23,7 @@ if selected:
         .sort_values(by="Gross", ascending=False)
     )
 
-    # Sprawdzenie, czy po odfiltrowaniu coś zostało
+    # Sprawdzenie, czy po odfiltrowaniu coś осталось
     if not selected_df.empty:
         # Tworzenie wykresu słupkowego z Plotly i gradientem kolorów
         fig = px.bar(
@@ -56,7 +56,7 @@ if selected:
             customdata=selected_df[["Formatted_Gross", "Released_Year"]]
         )
 
-        # Dostosowanie osi i stylu
+        # Dostosowanie osi i stylu, z ograniczeniem zakresu kolorów do wybranych filmów
         fig.update_layout(
             yaxis_tickformat=".2fM",
             yaxis_title="Zysk (w USD)",
@@ -65,7 +65,13 @@ if selected:
             xaxis_tickangle=45,
             showlegend=False,
             margin=dict(r=50),
-            coloraxis_showscale=False,  # Ukrycie paska kolorów (opcjonalne)
+            coloraxis_showscale=False,
+            coloraxis_colorbar_title="Zysk",
+            coloraxis=dict(
+                colorscale=["red", "green"],
+                cmin=selected_df["Gross"].min(),  # Minimalna wartość Gross z selected_df
+                cmax=selected_df["Gross"].max()   # Maksymalna wartość Gross z selected_df
+            ),
         )
 
         # Wyświetlenie wykresu w Streamlit
