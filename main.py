@@ -71,7 +71,6 @@ if selected:
             customdata=selected_df[["Formatted_Gross", "Released_Year"]]
         )
 
-        # Formatowanie osi Y
         fig.update_layout(
             yaxis=dict(
                 tickformat="",
