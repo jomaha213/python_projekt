@@ -71,19 +71,22 @@ if selected:
             customdata=selected_df[["Formatted_Gross", "Released_Year"]]
         )
 
+        # Automatyczne dostosowanie osi Y
         fig.update_layout(
             yaxis=dict(
-                tickformat="",
-                tickvals=selected_df["Gross"],
-                ticktext=[format_yaxis(val) for val in selected_df["Gross"]]
+                tickformat="~s",  # Format SI (np. 100M, 1B)
+                title="Zysk",
+                showgrid=True,
+                zeroline=True,
             ),
-            yaxis_title="Zysk",
-            xaxis_title="Tytuł filmu",
+            xaxis=dict(
+                title="Tytuł filmu",
+            ),
             title_font_size=14,
             xaxis_tickangle=45,
             showlegend=False,
             margin=dict(r=50),
-            coloraxis_showscale=False
+            coloraxis_showscale=False,
         )
 
         # Wyświetlenie wykresu w Streamlit
