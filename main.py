@@ -6,7 +6,7 @@ df = pd.read_csv("data/imdb_top_1000.csv")
 
 st.title("🎬 Rekomendacje filmów")
 
-selected = st.multiselect("Wybierz swoje ulubione filmy:", df["Series_Title"].tolist())
+selected = st.multiselect("Wybierz swoje ulubione filmy:", df["Genre"].tolist())
 
 """if selected:
     recs = recommend(df, selected)
