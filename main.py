@@ -1,11 +1,15 @@
 import streamlit as st
 import pandas as pd
 import plotly.express as px
+import sys
+import os
+sys.path.append(os.path.dirname(__file__))
 
 # Wczytanie danych
-from data.loader import DataLoader 
+from src.data.loader import DataLoader 
 
-df = DataLoader("data/imdb_top_1000.csv")
+loader = DataLoader("data/imdb_top_1000.csv")
+df = loader.load()
 
 # Konwersja kolumny Gross na liczby
 df["Gross"] = df["Gross"].replace("[,$]", "", regex=True).astype(float)
