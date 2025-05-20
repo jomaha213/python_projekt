@@ -1,44 +1,86 @@
 import streamlit as st
 import pandas as pd
-import matplotlib.pyplot as plt
+import plotly.express as px
 
 # Wczytanie danych
 df = pd.read_csv("data/imdb_top_1000.csv")
+
+# Konwersja kolumny Gross na liczby
+df["Gross"] = df["Gross"].replace("[,$]", "", regex=True).astype(float)
 
 # Tytuł aplikacji
 st.title("🎬 Rekomendacje filmów")
 
 # Wybór filmów przez użytkownika
-selected = st.multiselect("Wybierz swojes ulubione filmy:", df["Series_Title"].tolist())
+selected = st.multiselect("Wybierz swoje ulubione filmy:", df["Series_Title"].tolist())
 
 # Sprawdzenie, czy użytkownik wybrał filmy
 if selected:
-    # Filtrowanie danych dla wybranych filmów
-    selected_df = df[df["Series_Title"].isin(selected)][["Series_Title", "IMDB_Rating"]]
+    # Filtrowanie danych dla wybranych filmów, usuwanie NaN i sortowanie malejąco według Gross
+    selected_df = (
+        df[df["Series_Title"].isin(selected)][["Series_Title", "Released_Year", "Gross"]]
+        .dropna(subset=["Gross"])
+        .sort_values(by="Gross", ascending=False)
+    )
 
-    # Tworzenie wykresu słupkowego
-    fig, ax = plt.subplots(figsize=(10, 6))
-    ax.bar(selected_df["Series_Title"], selected_df["IMDB_Rating"], color="skyblue")
-    
-    # Dodanie tytułu i etykiet osi
-    ax.set_title("Oceny IMDB wybranych filmów", fontsize=14)
-    ax.set_xlabel("Tytuł filmu", fontsize=12)
-    ax.set_ylabel("Ocena IMDB", fontsize=12)
-    
-    # Obrót etykiet osi X dla lepszej czytelności
-    plt.xticks(rotation=45, ha="right")
-    
-    # Dodanie siatki
-    ax.grid(True, axis="y", linestyle="--", alpha=0.7)
-    
-    # Dopasowanie układu
-    plt.tight_layout()
-    
-    # Wyświetlenie wykresu w Streamlit
-    st.pyplot(fig)
+    # Sprawdzenie, czy po odfiltrowaniu coś осталось
+    if not selected_df.empty:
+        # Tworzenie wykresu słupkowego z Plotly i gradientem kolorów
+        fig = px.bar(
+            selected_df,
+            x="Series_Title",
+            y="Gross",
+            color="Gross",
+            color_continuous_scale=["red", "yellow", "green"],  # Gradient: czerwony → żółty → zielony
+            title="Zysk wybranych filmów",
+            labels={"Series_Title": "Tytuł filmu", "Gross": "Zysk (w USD)"},
+        )
 
-    # Opcjonalnie: Wyświetlenie tabeli z wybranymi filmami
-    st.write("🎥 Wybrane filmy:")
-    st.table(selected_df[["Series_Title", "IMDB_Rating"]])
+        # Funkcja do formatowania zysku w tooltipie (mln lub mld)
+        def format_gross(gross):
+            if gross >= 1_000_000_000:
+                return f"{gross / 1_000_000_000:.2f} mld"
+            else:
+                return f"{gross / 1_000_000:.2f} mln"
+
+        # Dodanie sformatowanego zysku jako nowej kolumny do tooltipa
+        selected_df["Formatted_Gross"] = selected_df["Gross"].apply(format_gross)
+
+        # Dostosowanie tooltipów z wytłuszczeniem kategorii i sformatowanym zyskiem
+        fig.update_traces(
+            hovertemplate=(
+                "<b>Tytuł filmu:</b> %{x}<br>" +
+                "<b>Zysk:</b> %{customdata[0]}<br>" +
+                "<b>Rok wydania:</b> %{customdata[1]}<extra></extra>"
+            ),
+            customdata=selected_df[["Formatted_Gross", "Released_Year"]]
+        )
+
+        # Dostosowanie osi i stylu, z ograniczeniem zakresu kolorów do wybranych filmów
+        fig.update_layout(
+            yaxis_tickformat=".2fM",
+            yaxis_title="Zysk (w USD)",
+            xaxis_title="Tytuł filmu",
+            title_font_size=14,
+            xaxis_tickangle=45,
+            showlegend=False,
+            margin=dict(r=50),
+            coloraxis_showscale=False,
+            coloraxis_colorbar_title="Zysk",
+            coloraxis=dict(
+                colorscale=["red", "yellow", "green"],  # Gradient: czerwony → żółty → zielony
+                cmin=selected_df["Gross"].min(),
+                cmax=selected_df["Gross"].max()
+            ),
+        )
+
+        # Wyświetlenie wykresu w Streamlit
+        st.plotly_chart(fig, use_container_width=True)
+
+        # Wyświetlenie tabeli z wybranymi filmami
+        st.write("🎥 Wybrane filmy (posortowane według zysku):")
+        st.table(selected_df[["Series_Title", "Released_Year", "Gross"]])
+    else:
+        st.write("Wybrane filmy nie mają danych o zysku (Gross). Wybierz inne filmy!")
 else:
     st.write("Wybierz przynajmniej jeden film, aby zobaczyć wykres!")
