@@ -25,6 +25,17 @@ if selected:
 
     # Sprawdzenie, czy po odfiltrowaniu coś zostało
     if not selected_df.empty:
+        # Funkcja do dynamicznego formatowania osi Y
+        def format_yaxis(value):
+            if value >= 1_000_000_000:
+                return f"{value / 1_000_000_000:.1f} mld"
+            elif value >= 1_000_000:
+                return f"{value / 1_000_000:.1f} mln"
+            elif value >= 1_000:
+                return f"{value / 1_000:.1f} tys."
+            else:
+                return str(int(value))
+
         # Tworzenie wykresu słupkowego z Plotly i gradientem kolorów
         fig = px.bar(
             selected_df,
@@ -33,15 +44,19 @@ if selected:
             color="Gross",
             color_continuous_scale=["red", "yellow", "green"],  # Gradient: czerwony → żółty → zielony
             title="Zysk wybranych filmów",
-            labels={"Series_Title": "Tytuł filmu", "Gross": "Zysk (w USD)"},
+            labels={"Series_Title": "Tytuł filmu", "Gross": "Zysk"},
         )
 
         # Funkcja do formatowania zysku w tooltipie (mln lub mld)
         def format_gross(gross):
             if gross >= 1_000_000_000:
                 return f"{gross / 1_000_000_000:.2f} mld"
-            else:
+            elif gross >= 1_000_000:
                 return f"{gross / 1_000_000:.2f} mln"
+            elif gross >= 1_000:
+                return f"{gross / 1_000:.2f} tys."
+            else:
+                return str(int(gross))
 
         # Dodanie sformatowanego zysku jako nowej kolumny do tooltipa
         selected_df["Formatted_Gross"] = selected_df["Gross"].apply(format_gross)
@@ -56,22 +71,20 @@ if selected:
             customdata=selected_df[["Formatted_Gross", "Released_Year"]]
         )
 
-        # Dostosowanie osi i stylu, z ograniczeniem zakresu kolorów do wybranych filmów
+        # Formatowanie osi Y
         fig.update_layout(
-            yaxis_tickformat=".2fM",
-            yaxis_title="Zysk (w USD)",
+            yaxis=dict(
+                tickformat="",
+                tickvals=selected_df["Gross"],
+                ticktext=[format_yaxis(val) for val in selected_df["Gross"]]
+            ),
+            yaxis_title="Zysk",
             xaxis_title="Tytuł filmu",
             title_font_size=14,
             xaxis_tickangle=45,
             showlegend=False,
             margin=dict(r=50),
-            coloraxis_showscale=False,
-            coloraxis_colorbar_title="Zysk",
-            coloraxis=dict(
-                colorscale=["red", "yellow", "green"],  # Gradient: czerwony → żółty → zielony
-                cmin=selected_df["Gross"].min(),
-                cmax=selected_df["Gross"].max()
-            ),
+            coloraxis_showscale=False
         )
 
         # Wyświetlenie wykresu w Streamlit
