@@ -1,6 +1,7 @@
 import streamlit as st
 import pandas as pd
 import matplotlib.pyplot as plt
+from matplotlib.ticker import FuncFormatter
 
 # Wczytanie danych
 df = pd.read_csv("data/imdb_top_1000.csv")
@@ -31,13 +32,21 @@ if selected:
     # Dodanie siatki
     ax.grid(True, axis="y", linestyle="--", alpha=0.7)
     
+    # Formatowanie osi Y (skracanie dużych liczb)
+    def millions_formatter(x, pos):
+        return f"{x / 1_000_000:.2f}M"  # Konwersja na miliony z 2 miejscami po przecinku
+    ax.yaxis.set_major_formatter(FuncFormatter(millions_formatter))
+    
+    # Dodanie większego marginesu po prawej stronie
+    plt.subplots_adjust(left=0.1, right=0.9)  # Zwiększenie miejsca po prawej
+    
     # Dopasowanie układu
     plt.tight_layout()
     
     # Wyświetlenie wykresu w Streamlit
     st.pyplot(fig)
 
-    # Opcjonalnie: Wyświetlenie tabeli z wybranymi filmami, posortowanej według Gross
+    # Opcjonalnie: Wyświetlenie tabeli z wybranymi filmami
     st.write("🎥 Wybrane filmy (posortowane według zysku):")
     st.table(selected_df[["Series_Title", "Gross"]])
 else:
