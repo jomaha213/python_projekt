@@ -12,3 +12,4 @@ selected = st.multiselect("Wybierz swoje ulubione filmy:", df["Series_Title"].to
     recs = recommend(df, selected)
     st.write("🎯 Rekomendacje:")
     st.table(recs[["Series_Title", "Genre", "IMDB_Rating"]])"""
+#
