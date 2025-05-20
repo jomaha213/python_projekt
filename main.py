@@ -3,7 +3,9 @@ import pandas as pd
 import plotly.express as px
 
 # Wczytanie danych
-df = pd.read_csv("data/imdb_top_1000.csv")
+from data.loader import DataLoader 
+
+df = DataLoader("data/imdb_top_1000.csv")
 
 # Konwersja kolumny Gross na liczby
 df["Gross"] = df["Gross"].replace("[,$]", "", regex=True).astype(float)
