@@ -25,21 +25,22 @@ if selected:
 
     # Sprawdzenie, czy po odfiltrowaniu coś zostało
     if not selected_df.empty:
-        # Tworzenie wykresu słupkowego z Plotly
+        # Tworzenie wykresu słupkowego z Plotly i gradientem kolorów
         fig = px.bar(
             selected_df,
             x="Series_Title",
             y="Gross",
-            color_discrete_sequence=["red"],
+            color="Gross",  # Kolor słupków zależny od wartości Gross
+            color_continuous_scale=["red", "green"],  # Gradient od czerwonego (niski Gross) do zielonego (wysoki Gross)
             title="Zysk wybranych filmów",
             labels={"Series_Title": "Tytuł filmu", "Gross": "Zysk (w USD)"},
         )
 
         # Funkcja do formatowania zysku w tooltipie (mln lub mld)
         def format_gross(gross):
-            if gross >= 1_000_000_000:  # Jeśli zysk w miliardach
+            if gross >= 1_000_000_000:
                 return f"{gross / 1_000_000_000:.2f} mld"
-            else:  # Jeśli zysk w milionach
+            else:
                 return f"{gross / 1_000_000:.2f} mln"
 
         # Dodanie sformatowanego zysku jako nowej kolumny do tooltipa
@@ -52,7 +53,7 @@ if selected:
                 "<b>Zysk:</b> %{customdata[0]}<br>" +
                 "<b>Rok wydania:</b> %{customdata[1]}<extra></extra>"
             ),
-            customdata=selected_df[["Formatted_Gross", "Released_Year"]]  # Przekazanie sformatowanego zysku i roku
+            customdata=selected_df[["Formatted_Gross", "Released_Year"]]
         )
 
         # Dostosowanie osi i stylu
@@ -64,6 +65,7 @@ if selected:
             xaxis_tickangle=45,
             showlegend=False,
             margin=dict(r=50),
+            coloraxis_showscale=False,  # Ukrycie paska kolorów (opcjonalne)
         )
 
         # Wyświetlenie wykresu w Streamlit
