@@ -23,7 +23,7 @@ if selected:
         .sort_values(by="Gross", ascending=False)
     )
 
-    # Sprawdzenie, czy po odfiltrowaniu coś осталось
+    # Sprawdzenie, czy po odfiltrowaniu coś zostało
     if not selected_df.empty:
         # Tworzenie wykresu słupkowego z Plotly i gradientem kolorów
         fig = px.bar(
@@ -77,9 +77,13 @@ if selected:
         # Wyświetlenie wykresu w Streamlit
         st.plotly_chart(fig, use_container_width=True)
 
-        # Wyświetlenie tabeli z wybranymi filmami
+        # Dodanie kolumny z numerami porządkowymi
+        selected_df.reset_index(drop=True, inplace=True)  # Reset indeksów dla poprawnej numeracji
+        selected_df.index += 1  # Dodanie numeracji od 1
+
+        # Wyświetlenie tabeli z numerami porządkowymi
         st.write("🎥 Wybrane filmy (posortowane według zysku):")
-        st.table(selected_df[["Series_Title", "Released_Year", "Gross"]])
+        st.table(selected_df.reset_index()[["index", "Series_Title", "Released_Year", "Gross"]].rename(columns={"index": "Lp."}))
     else:
         st.write("Wybrane filmy nie mają danych o zysku (Gross). Wybierz inne filmy!")
 else:
