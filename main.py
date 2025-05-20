@@ -2,6 +2,7 @@ import streamlit as st
 import pandas as pd
  #from src.recommender.simple_recommender import recommend
 
+df = pd.read_csv("data/imdb_top_1000.csv")
 
 st.title("🎬 Rekomendacje filmów")
 
