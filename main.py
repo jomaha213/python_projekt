@@ -35,14 +35,24 @@ if selected:
             labels={"Series_Title": "Tytuł filmu", "Gross": "Zysk (w USD)"},
         )
 
-        # Dostosowanie tooltipów z wytłuszczeniem kategorii
+        # Funkcja do formatowania zysku w tooltipie (mln lub mld)
+        def format_gross(gross):
+            if gross >= 1_000_000_000:  # Jeśli zysk w miliardach
+                return f"{gross / 1_000_000_000:.2f} mld"
+            else:  # Jeśli zysk w milionach
+                return f"{gross / 1_000_000:.2f} mln"
+
+        # Dodanie sformatowanego zysku jako nowej kolumny do tooltipa
+        selected_df["Formatted_Gross"] = selected_df["Gross"].apply(format_gross)
+
+        # Dostosowanie tooltipów z wytłuszczeniem kategorii i sformatowanym zyskiem
         fig.update_traces(
             hovertemplate=(
                 "<b>Tytuł filmu:</b> %{x}<br>" +
-                "<b>Zysk (w USD):</b> %{y:,.2f}<br>" +
-                "<b>Rok wydania:</b> %{customdata}<extra></extra>"
+                "<b>Zysk:</b> %{customdata[0]}<br>" +
+                "<b>Rok wydania:</b> %{customdata[1]}<extra></extra>"
             ),
-            customdata=selected_df["Released_Year"]  # Przekazanie danych Released_Year do tooltipa
+            customdata=selected_df[["Formatted_Gross", "Released_Year"]]  # Przekazanie sformatowanego zysku i roku
         )
 
         # Dostosowanie osi i stylu
