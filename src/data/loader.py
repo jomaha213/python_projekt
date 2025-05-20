@@ -17,3 +17,6 @@ class DataLoader:
         self.df = pd.read_csv(self.path)
         return self.df
 
+loader = DataLoader("data/imdb_top_1000.csv")
+df = loader.load()
+print(df)
