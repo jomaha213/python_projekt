@@ -14,16 +14,16 @@ selected = st.multiselect("Wybierz swojes ulubione filmy:", df["Series_Title"].t
 # Sprawdzenie, czy użytkownik wybrał filmy
 if selected:
     # Filtrowanie danych dla wybranych filmów
-    selected_df = df[df["Series_Title"].isin(selected)][["Series_Title", "IMDB_Rating"]]
+    selected_df = df[df["Series_Title"].isin(selected)][["Series_Title", "Gross"]]
 
     # Tworzenie wykresu słupkowego
     fig, ax = plt.subplots(figsize=(10, 6))
-    ax.bar(selected_df["Series_Title"], selected_df["IMDB_Rating"], color="skyblue")
+    ax.bar(selected_df["Series_Title"], selected_df["IMDB_Rating"], color="red")
     
     # Dodanie tytułu i etykiet osi
     ax.set_title("Oceny IMDB wybranych filmów", fontsize=14)
     ax.set_xlabel("Tytuł filmu", fontsize=12)
-    ax.set_ylabel("Ocena IMDB", fontsize=12)
+    ax.set_ylabel("Zysk z filmu", fontsize=12)
     
     # Obrót etykiet osi X dla lepszej czytelności
     plt.xticks(rotation=45, ha="right")
@@ -39,6 +39,6 @@ if selected:
 
     # Opcjonalnie: Wyświetlenie tabeli z wybranymi filmami
     st.write("🎥 Wybrane filmy:")
-    st.table(selected_df[["Series_Title", "IMDB_Rating"]])
+    st.table(selected_df[["Series_Title", "Zysk z filmu"]])
 else:
     st.write("Wybierz przynajmniej jeden film, aby zobaczyć wykres!")
