@@ -3,3 +3,4 @@ streamlit>=1.0.0
 pandas>=2.0.0
 psycopg2-binary>=2.7
 python-dotenv>=0.21
+supabase>=1.0.3
