@@ -4,7 +4,11 @@ import plotly.express as px
 import sys
 import os
 sys.path.append(os.path.dirname(__file__))
+from src.recommender.movie_recommender import MovieRecommender
+from src.data.loader import DataLoader 
 
+loader = DataLoader("data/imdb_top_1000.csv")
+df = loader.load()
 
 def show_dashboard():
 # Wczytanie danych
@@ -17,7 +21,7 @@ def show_dashboard():
     df["Gross"] = df["Gross"].replace("[,$]", "", regex=True).astype(float)
 
 # Tytuł aplikacji
-    st.title("🎬 Rekomendacje filmów")
+    st.title("🎬 Statystyki twoich ulubionych filmów")
 
 # Wybór filmów przez użytkownika
     selected = st.multiselect("Wybierz swoje ulubione filmy:", df["Series_Title"].tolist())
@@ -43,6 +47,18 @@ def show_dashboard():
                     return f"{value / 1_000:.1f} tys."
                 else:
                     return str(int(value))
+            recommender = MovieRecommender(df)
+
+            if selected:
+                st.header("🎯 Polecane filmy dla Ciebie")
+                recommendations = recommender.recommend(selected, top_n=6)
+
+                cols = st.columns(3)
+                for i, (_, row) in enumerate(recommendations.iterrows()):
+                    with cols[i % 3]:
+                        st.image(row["Poster_Link"], width=100)  # Jeśli masz linki do plakatów
+                        st.markdown(f"**{row['Series_Title']}**")
+                        st.markdown(row["Genre"])
 
         # Tworzenie wykresu słupkowego z Plotly i gradientem kolorów
             fig = px.bar(
@@ -111,3 +127,8 @@ def show_dashboard():
             st.write("Wybrane filmy nie mają danych o zysku (Gross). Wybierz inne filmy!")
     else:
         st.write("Wybierz przynajmniej jeden film, aby zobaczyć wykres!")
+
+show_dashboard()
+
+
+
