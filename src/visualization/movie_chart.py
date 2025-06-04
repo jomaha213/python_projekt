@@ -74,54 +74,32 @@ class MovieChart:
         )
 
     def create_left_chart(self, selected: list) -> None:
-        """Tworzy wykres kołowy po lewej stronie - zysk według gatunków."""
+        """Tworzy wykres pudełkowy po lewej stronie - rozkład ocen IMDB według lat."""
         if not selected:
             return
 
-        selected_df = self.df[self.df["Series_Title"].isin(selected)][["Series_Title", "Genre", "Gross"]].dropna(subset=["Genre", "Gross"])
+        selected_df = self.df[self.df["Series_Title"].isin(selected)][["Series_Title", "Released_Year", "IMDB_Rating"]].dropna(subset=["Released_Year", "IMDB_Rating"])
 
         if selected_df.empty:
-            st.write("Brak danych o gatunkach lub zysku dla wybranych filmów.")
+            st.write("Brak danych o ocenach IMDB lub latach wydania dla wybranych filmów.")
             return
 
-        # Rozdzielanie gatunków (jeśli filmy mają wiele gatunków oddzielonych przecinkami)
-        selected_df["Genre"] = selected_df["Genre"].str.split(", ")
-        selected_df = selected_df.explode("Genre")
+        # Konwersja roku na typ string, jeśli to potrzebne dla grupowania
+        selected_df["Released_Year"] = selected_df["Released_Year"].astype(str)
 
-        # Sumowanie zysku dla każdego gatunku
-        genre_gross = selected_df.groupby("Genre")["Gross"].sum().reset_index()
-
-        if genre_gross.empty:
-            st.write("Brak danych po grupowaniu według gatunków.")
-            return
-
-        # Formatowanie zysku dla tooltipa i tekstu na wykresie
-        genre_gross["Formatted_Gross"] = genre_gross["Gross"].apply(self.format_gross)
-
-        fig = px.pie(
-            genre_gross,
-            names="Genre",
-            values="Gross",
-            title="Zysk według gatunków",
-            labels={"Genre": "Gatunek", "Gross": "Zysk"},
-        )
-
-        # Dodanie wartości zysku pod procentami na wykresie
-        fig.update_traces(
-            textposition="inside",
-            textinfo="percent+value",
-            texttemplate="%{percent:.1%} - %{value:.2s}",
-            customdata=genre_gross["Formatted_Gross"],
-            hovertemplate=(
-                "<b>Gatunek:</b> %{label}<br>" +
-                "<b>Zysk:</b> %{customdata}<br>" +
-                "<extra></extra>"
-            ),
+        fig = px.box(
+            selected_df,
+            x="Released_Year",
+            y="IMDB_Rating",
+            title="Rozkład ocen IMDB według lat wydania",
+            labels={"Released_Year": "Rok wydania", "IMDB_Rating": "Ocena IMDB"},
         )
 
         fig.update_layout(
+            yaxis=dict(title="Ocena IMDB", showgrid=True),
+            xaxis=dict(title="Rok wydania"),
             title_font_size=14,
-            showlegend=True,
+            showlegend=False,
         )
 
         st.plotly_chart(fig, use_container_width=True)
