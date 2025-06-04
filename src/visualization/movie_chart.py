@@ -95,7 +95,7 @@ class MovieChart:
             st.write("Brak danych po grupowaniu według gatunków.")
             return
 
-        # Formatowanie zysku do tooltipa
+        # Formatowanie zysku dla tooltipa i tekstu na wykresie
         genre_gross["Formatted_Gross"] = genre_gross["Gross"].apply(self.format_gross)
 
         fig = px.pie(
@@ -104,12 +104,19 @@ class MovieChart:
             values="Gross",
             title="Zysk według gatunków",
             labels={"Genre": "Gatunek", "Gross": "Zysk"},
-            hover_data=["Formatted_Gross"],
         )
 
+        # Dodanie wartości zysku pod procentami na wykresie
         fig.update_traces(
             textposition="inside",
-            textinfo="percent+label",
+            textinfo="percent+value",
+            texttemplate="%{percent:.1%} - %{value:.2s}",
+            customdata=genre_gross["Formatted_Gross"],
+            hovertemplate=(
+                "<b>Gatunek:</b> %{label}<br>" +
+                "<b>Zysk:</b> %{customdata}<br>" +
+                "<extra></extra>"
+            ),
         )
 
         fig.update_layout(
@@ -120,31 +127,44 @@ class MovieChart:
         st.plotly_chart(fig, use_container_width=True)
 
     def create_right_chart(self, selected: list) -> None:
-        """Tworzy wykres kołowy po prawej stronie - rozkład gatunków."""
+        """Tworzy wykres punktowy po prawej stronie - IMDB_Rating vs Zysk netto."""
         if not selected:
             return
 
-        selected_df = self.df[self.df["Series_Title"].isin(selected)][["Series_Title", "Genre"]].dropna(subset=["Genre"])
+        selected_df = self.df[self.df["Series_Title"].isin(selected)][["Series_Title", "IMDB_Rating", "Gross"]].dropna(subset=["IMDB_Rating", "Gross"])
 
         if selected_df.empty:
+            st.write("Brak danych o ocenach IMDB lub zysku dla wybranych filmów.")
             return
 
-        selected_df["Genre"] = selected_df["Genre"].str.split(", ")
-        selected_df = selected_df.explode("Genre")
+        # Formatowanie zysku dla tooltipa
+        selected_df["Formatted_Gross"] = selected_df["Gross"].apply(self.format_gross)
 
-        genre_counts = selected_df["Genre"].value_counts().reset_index()
-        genre_counts.columns = ["Genre", "Count"]
+        fig = px.scatter(
+            selected_df,
+            x="IMDB_Rating",
+            y="Gross",
+            text="Series_Title",  # Etykiety z tytułem filmu
+            title="Ocena IMDB vs Zysk netto",
+            labels={"IMDB_Rating": "Ocena IMDB", "Gross": "Zysk netto"},
+            hover_data=["Formatted_Gross"],
+        )
 
-        fig = px.pie(
-            genre_counts,
-            names="Genre",
-            values="Count",
-            title="Rozkład gatunków wybranych filmów",
+        # Dostosowanie etykiet tekstowych na wykresie
+        fig.update_traces(
+            textposition="top center",
+            hovertemplate=(
+                "<b>Tytuł:</b> %{text}<br>" +
+                "<b>Ocena IMDB:</b> %{x}<br>" +
+                "<b>Zysk netto:</b> %{customdata}<extra></extra>"
+            ),
         )
 
         fig.update_layout(
+            yaxis=dict(tickformat="~s", title="Zysk netto", showgrid=True),
+            xaxis=dict(title="Ocena IMDB", showgrid=True),
             title_font_size=14,
-            showlegend=True,
+            showlegend=False,
         )
 
         st.plotly_chart(fig, use_container_width=True)
