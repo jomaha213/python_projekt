@@ -1,134 +1,58 @@
 import streamlit as st
 import pandas as pd
-import plotly.express as px
 import sys
 import os
 sys.path.append(os.path.dirname(__file__))
-from src.recommender.movie_recommender import MovieRecommender
-from src.data.loader import DataLoader 
 
+from src.recommender.movie_recommender import MovieRecommender
+from src.data.loader import DataLoader
+from src.visualization.movie_chart import MovieChart
+
+# Wczytanie danych
 loader = DataLoader("data/imdb_top_1000.csv")
 df = loader.load()
 
-def show_dashboard():
-# Wczytanie danych
-    from src.data.loader import DataLoader 
-
-    loader = DataLoader("data/imdb_top_1000.csv")
-    df = loader.load()
-
 # Konwersja kolumny Gross na liczby
-    df["Gross"] = df["Gross"].replace("[,$]", "", regex=True).astype(float)
+df["Gross"] = df["Gross"].replace("[,$]", "", regex=True).astype(float)
 
-# Tytuł aplikacji
+def show_dashboard():
+    # Tytuł aplikacji
     st.title("🎬 Statystyki twoich ulubionych filmów")
 
-# Wybór filmów przez użytkownika
+    # Wybór filmów przez użytkownika
     selected = st.multiselect("Wybierz swoje ulubione filmy:", df["Series_Title"].tolist())
 
-# Sprawdzenie, czy użytkownik wybrał filmy
+    # Inicjalizacja klasy do tworzenia wykresów
+    chart = MovieChart(df)
+
+    # Wyświetlanie rekomendacji
     if selected:
-    # Filtrowanie danych dla wybranych filmów, usuwanie NaN i sortowanie malejąco według Gross
-        selected_df = (
-            df[df["Series_Title"].isin(selected)][["Series_Title", "Released_Year", "Gross"]]
-            .dropna(subset=["Gross"])
-            .sort_values(by="Gross", ascending=False)
-        )
+        st.header("🎯 Polecane filmy dla Ciebie")
+        recommender = MovieRecommender(df)
+        recommendations = recommender.recommend(selected, top_n=6)
 
-        # Sprawdzenie, czy po odfiltrowaniu coś zostało
-        if not selected_df.empty:
-        # Funkcja do dynamicznego formatowania osi Y
-            def format_yaxis(value):
-                if value >= 1_000_000_000:
-                    return f"{value / 1_000_000_000:.1f} mld"
-                elif value >= 1_000_000:
-                    return f"{value / 1_000_000:.1f} mln"
-                elif value >= 1_000:
-                    return f"{value / 1_000:.1f} tys."
-                else:
-                    return str(int(value))
-            recommender = MovieRecommender(df)
+        cols = st.columns(3)
+        for i, (_, row) in enumerate(recommendations.iterrows()):
+            with cols[i % 3]:
+                st.image(row["Poster_Link"], width=100)
+                st.markdown(f"**{row['Series_Title']}**")
+                st.markdown(row["Genre"])
 
-            if selected:
-                st.header("🎯 Polecane filmy dla Ciebie")
-                recommendations = recommender.recommend(selected, top_n=6)
+    # Tworzenie dwóch kolumn dla nowych wykresów
+    col1, col2 = st.columns(2)
 
-                cols = st.columns(3)
-                for i, (_, row) in enumerate(recommendations.iterrows()):
-                    with cols[i % 3]:
-                        st.image(row["Poster_Link"], width=100)  # Jeśli masz linki do plakatów
-                        st.markdown(f"**{row['Series_Title']}**")
-                        st.markdown(row["Genre"])
+    with col1:
+        st.subheader("Zysk według gatunków")
+        chart.create_left_chart(selected)
 
-        # Tworzenie wykresu słupkowego z Plotly i gradientem kolorów
-            fig = px.bar(
-                selected_df,
-                x="Series_Title",
-                y="Gross",
-                color="Gross",
-                color_continuous_scale=["red", "yellow", "green"],  # Gradient: czerwony → żółty → zielony
-                title="Zysk wybranych filmów",
-                labels={"Series_Title": "Tytuł filmu", "Gross": "Zysk"},
-            )
+    with col2:
+        st.subheader("Rozkład gatunków")
+        chart.create_right_chart(selected)
 
-        # Funkcja do formatowania zysku w tooltipie (mln lub mld)
-            def format_gross(gross):
-                if gross >= 1_000_000_000:
-                    return f"{gross / 1_000_000_000:.2f} mld"
-                elif gross >= 1_000_000:
-                    return f"{gross / 1_000_000:.2f} mln"
-                elif gross >= 1_000:
-                    return f"{gross / 1_000:.2f} tys."
-                else:
-                    return str(int(gross))
+    # Istniejący wykres słupkowy poniżej
+    st.subheader("Zysk wybranych filmów")
+    chart.create_bar_chart(selected)
 
-            # Dodanie sformatowanego zysku jako nowej kolumny do tooltipa
-            selected_df["Formatted_Gross"] = selected_df["Gross"].apply(format_gross)
-
-        # Dostosowanie tooltipów z wytłuszczeniem kategorii i sformatowanym zyskiem
-            fig.update_traces(
-                hovertemplate=(
-                    "<b>Tytuł filmu:</b> %{x}<br>" +
-                    "<b>Zysk:</b> %{customdata[0]}<br>" +
-                    "<b>Rok wydania:</b> %{customdata[1]}<extra></extra>"
-                ),
-                customdata=selected_df[["Formatted_Gross", "Released_Year"]]
-            )
-
-        # Automatyczne dostosowanie osi Y
-            fig.update_layout(
-                yaxis=dict(
-                    tickformat="~s",  # Format SI (np. 100M, 1B)
-                    title="Zysk",
-                    showgrid=True,
-                    zeroline=True,
-                ),
-                xaxis=dict(
-                    title="Tytuł filmu",
-                ),
-                title_font_size=14,
-                xaxis_tickangle=45,
-                showlegend=False,
-                margin=dict(r=50),
-                coloraxis_showscale=False,
-            )
-
-            # Wyświetlenie wykresu w Streamlit
-            st.plotly_chart(fig, use_container_width=True)
-
-            # Dodanie kolumny z numerami porządkowymi
-            selected_df.reset_index(drop=True, inplace=True)  # Reset indeksów dla poprawnej numeracji
-            selected_df.index += 1  # Dodanie numeracji od 1
-
-        # Wyświetlenie tabeli z numerami porządkowymi
-            st.write("🎥 Wybrane filmy (posortowane według zysku):")
-            st.table(selected_df.reset_index()[["index", "Series_Title", "Released_Year", "Gross"]].rename(columns={"index": "Lp."}))
-        else:
-            st.write("Wybrane filmy nie mają danych o zysku (Gross). Wybierz inne filmy!")
-    else:
-        st.write("Wybierz przynajmniej jeden film, aby zobaczyć wykres!")
-
-show_dashboard()
-
-
-
+# Uruchomienie dashboardu
+if __name__ == "__main__":
+    show_dashboard()
