@@ -74,48 +74,55 @@ class MovieChart:
         )
 
     def create_left_chart(self, selected: list) -> None:
-        """Tworzy wykres kołowy zysku według gatunków dla wybranych filmów."""
+        """Tworzy wykres słupkowy pokazujący średni zysk filmów w różnych dekadach."""
         if not selected:
             return
 
-        selected_df = self.df[self.df["Series_Title"].isin(selected)][["Series_Title", "Genre", "Gross"]].dropna(subset=["Genre", "Gross"])
+        # Filtrowanie wybranych filmów
+        selected_df = self.df[self.df["Series_Title"].isin(selected)][["Series_Title", "Released_Year", "Gross"]].dropna(subset=["Released_Year", "Gross"])
 
         if selected_df.empty:
-            st.write("Brak danych o zysku lub gatunkach dla wybranych filmów.")
+            st.write("Brak danych o zyskach lub latach wydania dla wybranych filmów.")
             return
 
-        # Grupowanie zysków według gatunków i sumowanie
-        genre_gross = selected_df.groupby("Genre")["Gross"].sum().reset_index()
+        # Grupowanie na dekady
+        selected_df["Decade"] = (selected_df["Released_Year"] // 10) * 10  # Wyliczanie dekady
+        avg_gross_by_decade = selected_df.groupby("Decade")["Gross"].mean().reset_index()
 
-        # Formatowanie zysku dla tooltipów
-        genre_gross["Formatted_Gross"] = genre_gross["Gross"].apply(self.format_gross)
+        # Formatowanie zysku dla tooltipa
+        avg_gross_by_decade["Formatted_Gross"] = avg_gross_by_decade["Gross"].apply(self.format_gross)
 
-        fig = px.pie(
-            genre_gross,
-            names="Genre",
-            values="Gross",
-            title="Zysk według gatunków",
-            color_discrete_sequence=px.colors.qualitative.Pastel
+        # Tworzenie wykresu
+        fig = px.bar(
+            avg_gross_by_decade,
+            x="Decade",
+            y="Gross",
+            text="Formatted_Gross",  # Dodanie wartości na słupkach
+            title="Średni zysk filmów w różnych dekadach",
+            labels={"Decade": "Dekada", "Gross": "Średni zysk"},
+            color="Gross",  # Kolory bazowane na wartości zysku
+            color_continuous_scale=["blue", "cyan", "limegreen"],
         )
 
+        # Dostosowanie wyglądu wykresu
         fig.update_traces(
+            textposition="outside",  # Wyświetlanie wartości nad słupkami
             hovertemplate=(
-                "<b>Gatunek:</b> %{label}<br>" +
-                "<b>Zysk:</b> %{customdata[0]}<extra></extra>"
-            ),
-            customdata=genre_gross[["Formatted_Gross"]]
+                "<b>Dekada:</b> %{x}s<br>" +
+                "<b>Średni zysk:</b> %{text}<extra></extra>"
+            )
         )
-
         fig.update_layout(
-            yaxis=dict(title="Zysk", showgrid=True),
+            yaxis=dict(title="Średni zysk", tickformat="~s"),
+            xaxis=dict(title="Dekada"),
             title_font_size=14,
-            showlegend=True,
+            showlegend=False,
         )
 
         st.plotly_chart(fig, use_container_width=True)
 
     def create_right_chart(self, selected: list) -> None:
-        """Tworzy wykres punktowy po prawej stronie - IMDB_Rating vs Zysk netto."""
+        """Tworzy wykres punktowy pokazujący IMDB_Rating vs Zysk netto."""
         if not selected:
             return
 
@@ -155,4 +162,4 @@ class MovieChart:
             showlegend=False,
         )
 
-        st.plotly_chart(fig, use_container_width=True) 
+        st.plotly_chart(fig, use_container_width=True)
