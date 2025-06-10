@@ -74,50 +74,42 @@ class MovieChart:
         )
 
     def create_left_chart(self, selected: list) -> None:
-        """Tworzy wykres liniowy średniego zysku na film według dekad (lata 60, 70, 80, 90, 00)."""
+        """Tworzy wykres kołowy zysku według gatunków dla wybranych filmów."""
         if not selected:
             return
 
-        selected_df = self.df[self.df["Series_Title"].isin(selected)][["Series_Title", "Released_Year", "Gross"]].dropna(subset=["Released_Year", "Gross"])
+        selected_df = self.df[self.df["Series_Title"].isin(selected)][["Series_Title", "Genre", "Gross"]].dropna(subset=["Genre", "Gross"])
 
         if selected_df.empty:
-            st.write("Brak danych o zysku lub latach wydania dla wybranych filmów.")
+            st.write("Brak danych o zysku lub gatunkach dla wybranych filmów.")
             return
 
-        # Konwersja roku na dekady
-        selected_df = selected_df.copy()
-        selected_df["Released_Year"] = selected_df["Released_Year"].astype(int)
-        selected_df["Decade"] = pd.cut(selected_df["Released_Year"],
-                                      bins=[1959, 1969, 1979, 1989, 1999, 2009],
-                                      labels=["1960s", "1970s", "1980s", "1990s", "2000s"],
-                                      right=True)
+        # Grupowanie zysków według gatunków i sumowanie
+        genre_gross = selected_df.groupby("Genre")["Gross"].sum().reset_index()
 
-        # Obliczenie średniego zysku na film dla każdej dekady
-        decade_gross = selected_df.groupby("Decade")["Gross"].mean().reset_index()
+        # Formatowanie zysku dla tooltipów
+        genre_gross["Formatted_Gross"] = genre_gross["Gross"].apply(self.format_gross)
 
-        if decade_gross.empty:
-            st.write("Brak danych do wyświetlenia wykresu dla wybranych dekad.")
-            return
-
-        fig = px.line(
-            decade_gross,
-            x="Decade",
-            y="Gross",
-            title="Średni zysk na film według dekad",
-            labels={"Decade": "Dekada", "Gross": "Średni zysk (mln)"},
-            markers=True,
-            color_discrete_sequence=["#1f77b4"]
+        fig = px.pie(
+            genre_gross,
+            names="Genre",
+            values="Gross",
+            title="Zysk według gatunków",
+            color_discrete_sequence=px.colors.qualitative.Pastel
         )
 
         fig.update_traces(
-            hovertemplate="<b>Dekada:</b> %{x}<br><b>Średni zysk:</b> %{y:.2f} mln<extra></extra>"
+            hovertemplate=(
+                "<b>Gatunek:</b> %{label}<br>" +
+                "<b>Zysk:</b> %{customdata[0]}<extra></extra>"
+            ),
+            customdata=genre_gross[["Formatted_Gross"]]
         )
 
         fig.update_layout(
-            yaxis=dict(tickformat="~s", title="Średni zysk (mln)", showgrid=True),
-            xaxis=dict(title="Dekada"),
+            yaxis=dict(title="Zysk", showgrid=True),
             title_font_size=14,
-            showlegend=False,
+            showlegend=True,
         )
 
         st.plotly_chart(fig, use_container_width=True)
@@ -163,4 +155,4 @@ class MovieChart:
             showlegend=False,
         )
 
-        st.plotly_chart(fig, use_container_width=True)
+        st.plotly_chart(fig, use_container_width=True) 
