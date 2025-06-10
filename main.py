@@ -62,4 +62,4 @@ def show_dashboard():
     chart.create_bar_chart(selected)
 
 if __name__ == "__main__":
-    show_dashboard()
+    show_dashboard() 
