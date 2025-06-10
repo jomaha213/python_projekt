@@ -74,55 +74,48 @@ class MovieChart:
         )
 
     def create_left_chart(self, selected: list) -> None:
-        """Tworzy wykres słupkowy pokazujący średni zysk filmów w różnych dekadach."""
+        """Tworzy wykres kołowy zysku według gatunków dla wybranych filmów."""
         if not selected:
             return
 
-        # Filtrowanie wybranych filmów
-        selected_df = self.df[self.df["Series_Title"].isin(selected)][["Series_Title", "Released_Year", "Gross"]].dropna(subset=["Released_Year", "Gross"])
+        selected_df = self.df[self.df["Series_Title"].isin(selected)][["Series_Title", "Genre", "Gross"]].dropna(subset=["Genre", "Gross"])
 
         if selected_df.empty:
-            st.write("Brak danych o zyskach lub latach wydania dla wybranych filmów.")
+            st.write("Brak danych o zysku lub gatunkach dla wybranych filmów.")
             return
 
-        # Grupowanie na dekady
-        selected_df["Decade"] = (selected_df["Released_Year"] // 10) * 10  # Wyliczanie dekady
-        avg_gross_by_decade = selected_df.groupby("Decade")["Gross"].mean().reset_index()
+        # Grupowanie zysków według gatunków i sumowanie
+        genre_gross = selected_df.groupby("Genre")["Gross"].sum().reset_index()
 
-        # Formatowanie zysku dla tooltipa
-        avg_gross_by_decade["Formatted_Gross"] = avg_gross_by_decade["Gross"].apply(self.format_gross)
+        # Formatowanie zysku dla tooltipów
+        genre_gross["Formatted_Gross"] = genre_gross["Gross"].apply(self.format_gross)
 
-        # Tworzenie wykresu
-        fig = px.bar(
-            avg_gross_by_decade,
-            x="Decade",
-            y="Gross",
-            text="Formatted_Gross",  # Dodanie wartości na słupkach
-            title="Średni zysk filmów w różnych dekadach",
-            labels={"Decade": "Dekada", "Gross": "Średni zysk"},
-            color="Gross",  # Kolory bazowane na wartości zysku
-            color_continuous_scale=["blue", "cyan", "limegreen"],
+        fig = px.pie(
+            genre_gross,
+            names="Genre",
+            values="Gross",
+            title="Zysk według gatunków",
+            color_discrete_sequence=px.colors.qualitative.Pastel
         )
 
-        # Dostosowanie wyglądu wykresu
         fig.update_traces(
-            textposition="outside",  # Wyświetlanie wartości nad słupkami
             hovertemplate=(
-                "<b>Dekada:</b> %{x}s<br>" +
-                "<b>Średni zysk:</b> %{text}<extra></extra>"
-            )
+                "<b>Gatunek:</b> %{label}<br>" +
+                "<b>Zysk:</b> %{customdata[0]}<extra></extra>"
+            ),
+            customdata=genre_gross[["Formatted_Gross"]]
         )
+
         fig.update_layout(
-            yaxis=dict(title="Średni zysk", tickformat="~s"),
-            xaxis=dict(title="Dekada"),
+            yaxis=dict(title="Zysk", showgrid=True),
             title_font_size=14,
-            showlegend=False,
+            showlegend=True,
         )
 
         st.plotly_chart(fig, use_container_width=True)
 
     def create_right_chart(self, selected: list) -> None:
-        """Tworzy wykres punktowy pokazujący IMDB_Rating vs Zysk netto."""
+        """Tworzy wykres punktowy po prawej stronie - IMDB_Rating vs Zysk netto."""
         if not selected:
             return
 
@@ -135,24 +128,28 @@ class MovieChart:
         # Formatowanie zysku dla tooltipa
         selected_df["Formatted_Gross"] = selected_df["Gross"].apply(self.format_gross)
 
+        # Skracanie tytułów do 15 znaków z ... dla czytelności na wykresie
+        selected_df["Short_Title"] = selected_df["Series_Title"].apply(lambda x: x[:15] + "..." if len(x) > 15 else x)
+
         fig = px.scatter(
             selected_df,
             x="IMDB_Rating",
             y="Gross",
-            text="Series_Title",  # Etykiety z tytułem filmu
+            text="Short_Title",  # Użycie skróconych tytułów na wykresie
             title="Ocena IMDB vs Zysk netto",
             labels={"IMDB_Rating": "Ocena IMDB", "Gross": "Zysk netto"},
-            hover_data=["Formatted_Gross"],
+            hover_data=["Formatted_Gross", "Series_Title"],  # Pełne tytuły w tooltipach
         )
 
         # Dostosowanie etykiet tekstowych na wykresie
         fig.update_traces(
             textposition="top center",
             hovertemplate=(
-                "<b>Tytuł:</b> %{text}<br>" +
+                "<b>Tytuł:</b> %{customdata[1]}<br>" +  # Pełny tytuł z hover_data
                 "<b>Ocena IMDB:</b> %{x}<br>" +
-                "<b>Zysk netto:</b> %{customdata}<extra></extra>"
+                "<b>Zysk netto:</b> %{customdata[0]}<extra></extra>"
             ),
+            textfont=dict(size=10)  # Mniejszy rozmiar tekstu dla lepszej czytelności
         )
 
         fig.update_layout(
@@ -160,6 +157,7 @@ class MovieChart:
             xaxis=dict(title="Ocena IMDB", showgrid=True),
             title_font_size=14,
             showlegend=False,
+            margin=dict(l=50, r=50, t=50, b=50),  # Zwiększenie marginesów dla lepszego rozmieszczenia
         )
 
         st.plotly_chart(fig, use_container_width=True)
