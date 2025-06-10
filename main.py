@@ -9,34 +9,42 @@ from src.data.loader import DataLoader
 from src.visualization.movie_chart import MovieChart
 
 # Wczytanie danych
-loader = DataLoader("data/imdb_top_1000.csv")
-df = loader.load()
+try:
+    loader = DataLoader("data/imdb_top_1000.csv")
+    df = loader.load()
+except FileNotFoundError:
+    st.error("Nie znaleziono pliku danych!")
+    st.stop()
 
 # Konwersja kolumny Gross na liczby
-df["Gross"] = df["Gross"].replace("[,$]", "", regex=True).astype(float)
+df["Gross"] = pd.to_numeric(df["Gross"].replace("[,$]", "", regex=True), errors="coerce")
 
 def show_dashboard():
-    # Tytuł aplikacji
     st.title("🎬 Statystyki twoich ulubionych filmów")
 
-    # Wybór filmów przez użytkownika
     selected = st.multiselect("Wybierz swoje ulubione filmy:", df["Series_Title"].tolist())
+
+    if not selected:
+        st.info("Wybierz filmy, aby zobaczyć rekomendacje i wykresy!")
+        return
 
     # Inicjalizacja klasy do tworzenia wykresów
     chart = MovieChart(df)
 
     # Wyświetlanie rekomendacji
-    if selected:
-        st.header("🎯 Polecane filmy dla Ciebie")
-        recommender = MovieRecommender(df)
-        recommendations = recommender.recommend(selected, top_n=6)
+    st.header("🎯 Polecane filmy dla Ciebie")
+    recommender = MovieRecommender(df)
+    recommendations = recommender.recommend(selected, top_n=6)
 
-        cols = st.columns(3)
-        for i, (_, row) in enumerate(recommendations.iterrows()):
-            with cols[i % 3]:
+    cols = st.columns(3)
+    for i, (_, row) in enumerate(recommendations.iterrows()):
+        with cols[i % 3]:
+            try:
                 st.image(row["Poster_Link"], width=100)
-                st.markdown(f"**{row['Series_Title']}**")
-                st.markdown(row["Genre"])
+            except:
+                st.image("https://via.placeholder.com/100", width=100, caption="Brak plakatu")
+            st.markdown(f"**{row['Series_Title']}**")
+            st.markdown(row["Genre"])
 
     # Tworzenie dwóch kolumn dla nowych wykresów
     col1, col2 = st.columns(2)
@@ -53,6 +61,5 @@ def show_dashboard():
     st.subheader("Zysk wybranych filmów")
     chart.create_bar_chart(selected)
 
-# Uruchomienie dashboardu
 if __name__ == "__main__":
     show_dashboard()
