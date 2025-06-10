@@ -74,30 +74,48 @@ class MovieChart:
         )
 
     def create_left_chart(self, selected: list) -> None:
-        """Tworzy wykres pudełkowy po lewej stronie - rozkład ocen IMDB według lat."""
+        """Tworzy wykres liniowy średniego zysku na film według dekad (lata 60, 70, 80, 90, 00)."""
         if not selected:
             return
 
-        selected_df = self.df[self.df["Series_Title"].isin(selected)][["Series_Title", "Released_Year", "IMDB_Rating"]].dropna(subset=["Released_Year", "IMDB_Rating"])
+        selected_df = self.df[self.df["Series_Title"].isin(selected)][["Series_Title", "Released_Year", "Gross"]].dropna(subset=["Released_Year", "Gross"])
 
         if selected_df.empty:
-            st.write("Brak danych o ocenach IMDB lub latach wydania dla wybranych filmów.")
+            st.write("Brak danych o zysku lub latach wydania dla wybranych filmów.")
             return
 
-        # Konwersja roku na typ string, jeśli to potrzebne dla grupowania
-        selected_df["Released_Year"] = selected_df["Released_Year"].astype(str)
+        # Konwersja roku na dekady
+        selected_df = selected_df.copy()
+        selected_df["Released_Year"] = selected_df["Released_Year"].astype(int)
+        selected_df["Decade"] = pd.cut(selected_df["Released_Year"],
+                                      bins=[1959, 1969, 1979, 1989, 1999, 2009],
+                                      labels=["1960s", "1970s", "1980s", "1990s", "2000s"],
+                                      right=True)
 
-        fig = px.box(
-            selected_df,
-            x="Released_Year",
-            y="IMDB_Rating",
-            title="Rozkład ocen IMDB według lat wydania",
-            labels={"Released_Year": "Rok wydania", "IMDB_Rating": "Ocena IMDB"},
+        # Obliczenie średniego zysku na film dla każdej dekady
+        decade_gross = selected_df.groupby("Decade")["Gross"].mean().reset_index()
+
+        if decade_gross.empty:
+            st.write("Brak danych do wyświetlenia wykresu dla wybranych dekad.")
+            return
+
+        fig = px.line(
+            decade_gross,
+            x="Decade",
+            y="Gross",
+            title="Średni zysk na film według dekad",
+            labels={"Decade": "Dekada", "Gross": "Średni zysk (mln)"},
+            markers=True,
+            color_discrete_sequence=["#1f77b4"]
+        )
+
+        fig.update_traces(
+            hovertemplate="<b>Dekada:</b> %{x}<br><b>Średni zysk:</b> %{y:.2f} mln<extra></extra>"
         )
 
         fig.update_layout(
-            yaxis=dict(title="Ocena IMDB", showgrid=True),
-            xaxis=dict(title="Rok wydania"),
+            yaxis=dict(tickformat="~s", title="Średni zysk (mln)", showgrid=True),
+            xaxis=dict(title="Dekada"),
             title_font_size=14,
             showlegend=False,
         )
