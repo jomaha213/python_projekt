@@ -128,28 +128,24 @@ class MovieChart:
         # Formatowanie zysku dla tooltipa
         selected_df["Formatted_Gross"] = selected_df["Gross"].apply(self.format_gross)
 
-        # Skracanie tytułów do 15 znaków z ... dla czytelności na wykresie
-        selected_df["Short_Title"] = selected_df["Series_Title"].apply(lambda x: x[:15] + "..." if len(x) > 15 else x)
-
         fig = px.scatter(
             selected_df,
             x="IMDB_Rating",
             y="Gross",
-            text="Short_Title",  # Użycie skróconych tytułów na wykresie
+            text="Series_Title",  # Etykiety z tytułem filmu
             title="Ocena IMDB vs Zysk netto",
             labels={"IMDB_Rating": "Ocena IMDB", "Gross": "Zysk netto"},
-            hover_data=["Formatted_Gross", "Series_Title"],  # Pełne tytuły w tooltipach
+            hover_data=["Formatted_Gross"],
         )
 
         # Dostosowanie etykiet tekstowych na wykresie
         fig.update_traces(
             textposition="top center",
             hovertemplate=(
-                "<b>Tytuł:</b> %{customdata[1]}<br>" +  # Pełny tytuł z hover_data
+                "<b>Tytuł:</b> %{text}<br>" +
                 "<b>Ocena IMDB:</b> %{x}<br>" +
-                "<b>Zysk netto:</b> %{customdata[0]}<extra></extra>"
+                "<b>Zysk netto:</b> %{customdata}<extra></extra>"
             ),
-            textfont=dict(size=10)  # Mniejszy rozmiar tekstu dla lepszej czytelności
         )
 
         fig.update_layout(
@@ -157,7 +153,6 @@ class MovieChart:
             xaxis=dict(title="Ocena IMDB", showgrid=True),
             title_font_size=14,
             showlegend=False,
-            margin=dict(l=50, r=50, t=50, b=50),  # Zwiększenie marginesów dla lepszego rozmieszczenia
         )
 
-        st.plotly_chart(fig, use_container_width=True)
+        st.plotly_chart(fig, use_container_width=True) 
