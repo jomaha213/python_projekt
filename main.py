@@ -46,18 +46,13 @@ def show_dashboard():
             st.markdown(f"**{row['Series_Title']}**")
             st.markdown(row["Genre"])
 
-    # Tworzenie dwóch kolumn dla nowych wykresów
-    col1, col2 = st.columns(2)
+    # Wyświetlanie wykresów jeden pod drugim
+    st.subheader("Zysk według gatunków")
+    chart.create_left_chart(selected)
 
-    with col1:
-        st.subheader("Zysk według gatunków")
-        chart.create_left_chart(selected)
+    st.subheader("Rozkład gatunków")
+    chart.create_right_chart(selected)
 
-    with col2:
-        st.subheader("Rozkład gatunków")
-        chart.create_right_chart(selected)
-
-    # Istniejący wykres słupkowy poniżej
     st.subheader("Zysk wybranych filmów")
     chart.create_bar_chart(selected)
 
