@@ -20,12 +20,13 @@ class MovieRecommender:
         self.feature_matrix = self._prepare_feature_matrix()
 
     def _prepare_feature_matrix(self):
+        # Łączymy kolumny tekstowe do jednego ciągu znaków
         self.df["combined"] = (
             self.df["Genre"].fillna('') + ' ' +
             self.df["Director"].fillna('') + ' ' +
-            self.df["Star1"].fillna('') + ' ' +  
+            self.df["Star1"].fillna('') + ' ' +  # dopasuj do swoich kolumn
             self.df["Star2"].fillna('') + ' ' +
-            self.df["IMDB_Rating"].fillna('')
+            self.df["Overview"].fillna('')
         )
         return self.vectorizer.fit_transform(self.df["combined"])
 
@@ -39,9 +40,10 @@ class MovieRecommender:
         mean_vector = self.feature_matrix[indices].mean(axis=0)
         mean_vector = np.array(mean_vector).reshape(1, -1)
 
-        # podobieństwo z każdym filmem i sortowanie
+        # Oblicz podobieństwo z każdym filmem
         similarities = cosine_similarity(mean_vector, self.feature_matrix).flatten()
 
+        # Posortuj, ale pomiń filmy już wybrane
         self.df["similarity"] = similarities
         recommendations = self.df[~self.df["Series_Title"].isin(selected_titles)]
         recommendations = recommendations.sort_values(by="similarity", ascending=False)
