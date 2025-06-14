@@ -9,7 +9,6 @@ def sign():
     manager = LoginManager()
 
     if not st.session_state.logged_in:
-        manager = LoginManager()
         manager.login_panel()
             
 
