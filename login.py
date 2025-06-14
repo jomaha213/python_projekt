@@ -41,7 +41,7 @@ class LoginManager:
             return False
         try:
             with self.conn.cursor() as cur:
-                # Sprawdź czy użytkownik już istnieje
+                # Sprawdzenie czy użytkownik już istnieje
                 cur.execute("SELECT 1 FROM users WHERE username = %s", (username,))
                 if cur.fetchone():
                     st.error("Użytkownik o takiej nazwie już istnieje.")

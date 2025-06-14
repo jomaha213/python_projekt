@@ -2,8 +2,7 @@ import psycopg2
 from dotenv import load_dotenv
 import os
 import streamlit as st
-# Load environment variables from .env
-
+# załadowanie env(secrets) w hostingu streamlit
 
 def connect_db():
     try:
