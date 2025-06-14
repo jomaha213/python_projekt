@@ -1,6 +1,6 @@
 import streamlit as st
-from sign import sign # logika logowania
-from main import show_dashboard
+from sign import sign # logika logowania (1 strona)
+from main import show_dashboard # dashbaord (2 strona)
 
 
 def main():
