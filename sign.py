@@ -10,9 +10,7 @@ def sign():
 
     if not st.session_state.logged_in:
         manager.login_panel()
-            
-
-    
+               
 
 if __name__ == "__main__":
     sign()
