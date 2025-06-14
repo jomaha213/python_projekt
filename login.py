@@ -71,8 +71,10 @@ class LoginManager:
         if option == "Zaloguj się":
             if st.button("Zaloguj"):
                 if self.verify_user(username, password):
-                    st.success(f"Witaj, {username}!")
-                    # dalej np. dashboard
+                    st.session_state.logged_in = True
+                    st.session_state.username = username
+                    st.success(f"Zalogowano jako {username}")
+                    st.rerun()
                 else:
                     st.error("Niepoprawny login lub hasło")
         else:
