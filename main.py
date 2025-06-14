@@ -31,7 +31,7 @@ def show_dashboard():
     # Inicjalizacja klasy do tworzenia wykresów
     chart = MovieChart(df)
 
-    # Wyświetlanie rekomendacji
+    # rekomendacja
     st.header("🎯 Polecane filmy dla Ciebie")
     recommender = MovieRecommender(df)
     recommendations = recommender.recommend(selected, top_n=6)
@@ -45,19 +45,19 @@ def show_dashboard():
                 st.image("https://via.placeholder.com/100", width=100, caption="Brak plakatu")
             st.markdown(f"**{row['Series_Title']}**")
             st.markdown(row["Genre"])
-
-    # Tworzenie dwóch kolumn dla nowych wykresów
+    
+    # wykresy
     col1, col2 = st.columns(2)
-
+    # 1 wykres
     with col1:
         st.subheader("Zysk według gatunków")
         chart.create_left_chart(selected)
-
+    # 2 wykres
     with col2:
         st.subheader("Rozkład gatunków")
         chart.create_right_chart(selected)
 
-    # Istniejący wykres słupkowy poniżej
+    # wykres kolumnowy + tabela 
     st.subheader("Zysk wybranych filmów")
     chart.create_bar_chart(selected)
 

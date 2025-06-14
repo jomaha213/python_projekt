@@ -84,10 +84,10 @@ class MovieChart:
             st.write("Brak danych o zysku lub gatunkach dla wybranych filmów.")
             return
 
-        # Grupowanie zysków według gatunków i sumowanie
+        
         genre_gross = selected_df.groupby("Genre")["Gross"].sum().reset_index()
 
-        # Formatowanie zysku dla tooltipów
+       
         genre_gross["Formatted_Gross"] = genre_gross["Gross"].apply(self.format_gross)
 
         fig = px.pie(
@@ -125,20 +125,18 @@ class MovieChart:
             st.write("Brak danych o ocenach IMDB lub zysku dla wybranych filmów.")
             return
 
-        # Formatowanie zysku dla tooltipa
         selected_df["Formatted_Gross"] = selected_df["Gross"].apply(self.format_gross)
 
         fig = px.scatter(
             selected_df,
             x="IMDB_Rating",
             y="Gross",
-            text="Series_Title",  # Etykiety z tytułem filmu
+            text="Series_Title",  
             title="Ocena IMDB vs Zysk netto",
             labels={"IMDB_Rating": "Ocena IMDB", "Gross": "Zysk netto"},
             hover_data=["Formatted_Gross"],
         )
 
-        # Dostosowanie etykiet tekstowych na wykresie
         fig.update_traces(
             textposition="top center",
             hovertemplate=(
