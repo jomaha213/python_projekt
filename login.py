@@ -61,29 +61,6 @@ class LoginManager:
         finally:
             self.disconnect()
 
-    def login_panel(self):
-        st.title("Panel logowania")
-        option = st.radio("Wybierz opcję", ["Zaloguj się", "Zarejestruj się"])
-
-        username = st.text_input("Login")
-        password = st.text_input("Hasło", type="password")
-
-        if option == "Zaloguj się":
-            if st.button("Zaloguj"):
-                if self.verify_user(username, password):
-                    st.session_state.logged_in = True
-                    st.session_state.username = username
-                    st.success(f"Zalogowano jako {username}")
-                    st.rerun()
-                else:
-                    st.error("Niepoprawny login lub hasło")
-        else:
-            if st.button("Zarejestruj"):
-                if username and password:
-                    self.register_user(username, password)
-                else:
-                    st.warning("Wypełnij oba pola!")
 
 if __name__ == "__main__":
-    manager = LoginManager()
-    manager.login_panel()
+
