@@ -16,8 +16,7 @@ except FileNotFoundError:
     st.error("Nie znaleziono pliku danych!")
     st.stop()
 
-# Konwersja kolumny Gross na liczby
-df["Gross"] = pd.to_numeric(df["Gross"].replace("[,$]", "", regex=True), errors="coerce")
+
 
 def show_dashboard():
     st.title("🎬 Statystyki twoich ulubionych filmów")
